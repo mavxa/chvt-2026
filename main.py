@@ -282,7 +282,9 @@ class Mission(Node):
         self.log(f"Стартовая метка: {self.start_id}")
         self.log(f"Целевая метка: {TARGET_ID}")
         self.log(f"Координаты цели: {marker_position(TARGET_ID)}")
-        self.log(f"Маршрут к цели: {self.route_to_target}")
+        self.log(
+            f"Маршрут к цели состоит из следующих aruco маркеров: {self.route_to_target}"
+        )
         print(f"ROUTE_TO_TARGET: {self.route_to_target}")
 
     def follow_route(self):
