@@ -9,7 +9,17 @@
 
 ## Запуск
 
-Терминал 1, симулятор:
+1. ### Зайти под VM, на которой запущен симулятор. Инструкция: [docs/работа с симулятором.pptx](docs/работа%20с%20симулятором.pptx)
+
+2. ### Сделать git clone проекта в домашней директории (~)
+```bash
+cd ~
+git clone https://github.com/mavxa/chvt-2026.git
+cd ~/chvt-2026
+git status
+```
+
+3. ### Терминал 1, симулятор:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
@@ -18,7 +28,7 @@ export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 ros2 launch ar_webots_fms_ros2 module2.launch.py
 ```
 
-Терминал 2, алгоритм:
+4. ### Терминал 2, алгоритм:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
@@ -27,13 +37,15 @@ cd ~/zed/chvt-2026
 python3 main.py
 ```
 
-Скрипт сам запускает препятствие после достижения цели командой:
+- p.s. source и export можно не делать, но если что то не работает сделайте
+
+### Скрипт сам запускает препятствие после достижения цели командой:
 
 ```bash
 ros2 launch ar_webots_fms_ros2 spawn_object.launch.py x:=-3.0 y:=3.0 angle_z:=0.0 object_name:=obstacle
 ```
 
-## Что делает алгоритм
+### Что делает алгоритм
 
 1. Ждет стартовую ArUco-метку из `/RMC2/aruco_id`.
 2. Строит граф сетки ArUco-маркеров.

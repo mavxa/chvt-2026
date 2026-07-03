@@ -12,7 +12,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Bool, String
 
-# основные переменные для гибкости исполнения скрипта
+# основные переменные для гибкости исполнения скрипта.
 TARGET_ID = 33
 BLOCKED_ID_AFTER_TARGET = 21
 
@@ -23,18 +23,18 @@ MARKER_SPACING = 1.0
 MAP_ROTATION = 0.0
 
 # медленная скорость = стабильность)
+# для стабильности скорость лучше не менять.
 MAX_LINEAR = 0.20
 MAX_ANGULAR = 0.35
 
 # поврот до движения(!менять чтобы избежать ошибки поворота)
-MOVE_YAW_TOLERANCE = 0.12
+MOVE_YAW_TOLERANCE = 0.12  # - идеал, (было 0.9)
 
 # запасной вариант, если камера чуть не поймала аруко, но по odometry робот уже рядом.
 ODOM_REACH_TOLERANCE = 0.22
 
 # odometry-зачет включается не сразу, а только если робот уже рядом с точкой
-# если робот будет крутиться 30 секунд
-ODOM_REACH_TIMEOUT = 30.0
+ODOM_REACH_TIMEOUT = 30.0  # если робот будет крутиться 30 секунд.
 
 # Когда камера впервые увидела нужный аруко, робот еще немного едет вперед,
 # чтобы метка попала ближе к центру камеры, и только потом переключает waypoint.
@@ -88,7 +88,7 @@ def marker_position(marker_id):
 
 
 def build_graph(blocked_id=None):
-    # граф осседства аруко маркеров
+    # граф соседства аруко маркеров
     graph = {}
 
     for marker_id in range(GRID_ROWS * GRID_COLS):
@@ -116,7 +116,7 @@ def build_graph(blocked_id=None):
 
 
 def shortest_path(graph, start_id, target_id):
-    # логика поиска кратчайшего пути
+    # логика поиска кратчайшего пути.
     queue = deque([start_id])
     parent = {start_id: None}
 
@@ -131,7 +131,9 @@ def shortest_path(graph, start_id, target_id):
                 queue.append(neighbor)
 
     if target_id not in parent:
-        raise RuntimeError(f"Нет маршрута от {start_id} до {target_id}")
+        raise RuntimeError(
+            f"Нет маршрута от {start_id} до {target_id}, возможно проблема с aruco картой"
+        )
 
     path = []
     current = target_id
@@ -202,7 +204,7 @@ class Mission(Node):
         self.log("Жду стартовую ArUco-метку. До обнаружения метки робот НЕ едет.")
 
     def on_aruco(self, msg):
-        # В сообщении может быть просто "0" или строка с текстом поэтомуберем первое число.
+        # В сообщении может быть просто "0" или строка с текстом поэтому берем первое число.
         match = re.search(r"-?\d+", msg.data)
         if match:
             self.current_aruco = int(match.group(0))
