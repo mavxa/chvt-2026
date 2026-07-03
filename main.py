@@ -34,7 +34,13 @@ ODOM_REACH_TOLERANCE = 0.22
 
 # odometry-зачет включается не сразу, а только если робот уже рядом с точкой
 # если робот будет крутиться 30 секунд
-ODOM_REACH_TIMEOUT = 15.0
+ODOM_REACH_TIMEOUT = 30.0
+
+# Когда камера впервые увидела нужный аруко, робот еще немного едет вперед,
+# чтобы метка попала ближе к центру камеры, и только потом переключает waypoint.
+ARUCO_CENTER_FORWARD_DISTANCE = 0.06
+ARUCO_CENTER_LINEAR = 0.04
+ARUCO_CENTER_TIMEOUT = 2.0
 
 # Лидарная безопасность.
 FRONT_STOP_DISTANCE = 0.45
@@ -179,6 +185,10 @@ class Mission(Node):
         self.spawn_process = None
         self.odom_wait_marker = None
         self.odom_wait_started = None
+        self.aruco_center_marker = None
+        self.aruco_center_start_x = None
+        self.aruco_center_start_y = None
+        self.aruco_center_started = None
 
         log_dir = Path(__file__).resolve().parent / "reports"
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -289,11 +299,42 @@ class Mission(Node):
 
         target_marker = self.route[self.route_index]
 
-        # если нижняя камера увидела нужный аруко, значит робот достигнул целевой.
+        # Если нижняя камера впервые увидела нужный аруко, не переключаем waypoint сразу.
+        # Сначала едем еще несколько сантиметров прямо, чтобы метка оказалась ближе к центру камеры.
         if self.current_aruco == target_marker:
-            self.log(f"Waypoint достигнут по ArUco: {target_marker}")
+            now = self.get_clock().now().nanoseconds / 1e9
+            if self.aruco_center_marker != target_marker:
+                self.aruco_center_marker = target_marker
+                self.aruco_center_start_x = self.pose.x
+                self.aruco_center_start_y = self.pose.y
+                self.aruco_center_started = now
+                self.log(
+                    f"ArUco {target_marker} увиден, доезжаю вперед для центрирования"
+                )
+
+            centered_distance = math.hypot(
+                self.pose.x - self.aruco_center_start_x,
+                self.pose.y - self.aruco_center_start_y,
+            )
+            centered_time = now - self.aruco_center_started
+
+            if (
+                centered_distance < ARUCO_CENTER_FORWARD_DISTANCE
+                and centered_time < ARUCO_CENTER_TIMEOUT
+            ):
+                self.last_angular = 0.0
+                self.publish_cmd(ARUCO_CENTER_LINEAR, 0.0)
+                return
+
+            self.log(
+                f"Waypoint достигнут по ArUco после центрирования: {target_marker}, проехал {centered_distance:.2f} м"
+            )
             self.odom_wait_marker = None
             self.odom_wait_started = None
+            self.aruco_center_marker = None
+            self.aruco_center_start_x = None
+            self.aruco_center_start_y = None
+            self.aruco_center_started = None
             self.route_index += 1
             self.stop()
             return
