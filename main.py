@@ -29,9 +29,12 @@ MAX_ANGULAR = 0.35
 # поврот до движения(!менять чтобы избежать ошибки поворота)
 MOVE_YAW_TOLERANCE = 0.09
 
-# запасной вариант, если камера чуть не поймала ArUco, но по odometry робот уже рядом.
-# 0.22 м укладывается в требование точности и не дает роботу крутиться вокруг последней точки.
+# запасной вариант, если камера чуть не поймала аруко, но по odometry робот уже рядом.
 ODOM_REACH_TOLERANCE = 0.22
+
+# odometry-зачет включается не сразу, а только если робот уже рядом с точкой
+# если робот будет крутиться 30 секунд
+ODOM_REACH_TIMEOUT = 30.0
 
 # Лидарная безопасность.
 FRONT_STOP_DISTANCE = 0.45
@@ -174,6 +177,8 @@ class Mission(Node):
         self.last_angular = 0.0
         self.obstacle_spawned = False
         self.spawn_process = None
+        self.odom_wait_marker = None
+        self.odom_wait_started = None
 
         log_dir = Path(__file__).resolve().parent / "reports"
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -287,6 +292,8 @@ class Mission(Node):
         # если нижняя камера увидела нужный аруко, значит робот достигнул целевой.
         if self.current_aruco == target_marker:
             self.log(f"Waypoint достигнут по ArUco: {target_marker}")
+            self.odom_wait_marker = None
+            self.odom_wait_started = None
             self.route_index += 1
             self.stop()
             return
@@ -299,16 +306,30 @@ class Mission(Node):
         desired_yaw = math.atan2(dy, dx)
         yaw_error = normalize_angle(desired_yaw - self.yaw)
 
-        # Если аруко чуть не попал в камеру, но по odometry мы уже достаточно близко,
-        # считаем waypoint достигнутым
-        # иначе робот проезжает точку, цель оказывается "сзади", и он начинает крутиться как бешанный.
+        # Если ArUco не попал в камеру, но по odometry мы уже достаточно близко,
+        # НЕ засчитываем точку сразу. Сначала даем роботу 30 секунд попробовать
+        # поймать метку камерой. Если он все это время крутится/ищет метку,
+        # тогда засчитываем waypoint по odometry, чтобы не зависнуть навсегда.
         if distance < ODOM_REACH_TOLERANCE:
-            self.log(
-                f"Waypoint достигнут по odometry: {target_marker}, расстояние {distance:.2f} м"
-            )
-            self.route_index += 1
-            self.stop()
-            return
+            now = self.get_clock().now().nanoseconds / 1e9
+            if self.odom_wait_marker != target_marker:
+                self.odom_wait_marker = target_marker
+                self.odom_wait_started = now
+                self.log(
+                    f"Рядом с marker={target_marker} по odometry ({distance:.2f} м), жду ArUco до {ODOM_REACH_TIMEOUT:.0f} сек"
+                )
+            elif now - self.odom_wait_started >= ODOM_REACH_TIMEOUT:
+                self.log(
+                    f"Waypoint засчитан по odometry после {ODOM_REACH_TIMEOUT:.0f} сек ожидания: {target_marker}, расстояние {distance:.2f} м"
+                )
+                self.odom_wait_marker = None
+                self.odom_wait_started = None
+                self.route_index += 1
+                self.stop()
+                return
+        else:
+            self.odom_wait_marker = None
+            self.odom_wait_started = None
 
         # Сначала поворачиваем почти ровно на следующую метку, потом едем вперед.
         if abs(yaw_error) > MOVE_YAW_TOLERANCE:
