@@ -29,6 +29,10 @@ MAX_ANGULAR = 0.35
 # поврот до движения(!менять чтобы избежать ошибки поворота)
 MOVE_YAW_TOLERANCE = 0.09
 
+# запасной вариант, если камера чуть не поймала ArUco, но по odometry робот уже рядом.
+# 0.22 м укладывается в требование точности и не дает роботу крутиться вокруг последней точки.
+ODOM_REACH_TOLERANCE = 0.22
+
 # Лидарная безопасность.
 FRONT_STOP_DISTANCE = 0.45
 FRONT_SLOW_DISTANCE = 0.80
@@ -294,6 +298,17 @@ class Mission(Node):
 
         desired_yaw = math.atan2(dy, dx)
         yaw_error = normalize_angle(desired_yaw - self.yaw)
+
+        # Если аруко чуть не попал в камеру, но по odometry мы уже достаточно близко,
+        # считаем waypoint достигнутым
+        # иначе робот проезжает точку, цель оказывается "сзади", и он начинает крутиться как бешанный.
+        if distance < ODOM_REACH_TOLERANCE:
+            self.log(
+                f"Waypoint достигнут по odometry: {target_marker}, расстояние {distance:.2f} м"
+            )
+            self.route_index += 1
+            self.stop()
+            return
 
         # Сначала поворачиваем почти ровно на следующую метку, потом едем вперед.
         if abs(yaw_error) > MOVE_YAW_TOLERANCE:
