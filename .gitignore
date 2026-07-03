@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+chvt_logs/
+scripts/chvt-2026/
+*.log
