@@ -20,7 +20,7 @@ GRID_COLS = 6
 GRID_ROWS = 6
 MARKER_SPACING = 1.0
 
-MAP_ROTATION = 0.0
+# MAP_ROTATION = 0.0
 
 # медленная скорость = стабильность)
 MAX_LINEAR = 0.20
@@ -171,7 +171,7 @@ class Mission(Node):
         self.obstacle_spawned = False
         self.spawn_process = None
 
-        log_dir = Path.home() / "scripts" / "chvt-2026"
+        log_dir = Path(__file__).resolve().parent / "reports"
         log_dir.mkdir(parents=True, exist_ok=True)
         self.log_path = (
             log_dir / f"mission_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"

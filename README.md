@@ -43,7 +43,7 @@ ros2 launch ar_webots_fms_ros2 spawn_object.launch.py x:=-3.0 y:=3.0 angle_z:=0.
 6. После достижения ID `33` запускает spawn препятствия на ID `21`.
 7. Строит обратный маршрут до старта, исключая ID `21`.
 8. Возвращается на старт.
-9. Пишет лог в `~/scripts/chvt-2026/mission_*.log`.
+9. Пишет лог в `reports/mission_*.log`.
 
 ## Полезные команды проверки
 
