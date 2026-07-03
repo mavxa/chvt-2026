@@ -27,14 +27,14 @@ MAX_LINEAR = 0.20
 MAX_ANGULAR = 0.35
 
 # поврот до движения(!менять чтобы избежать ошибки поворота)
-MOVE_YAW_TOLERANCE = 0.09
+MOVE_YAW_TOLERANCE = 0.08
 
 # запасной вариант, если камера чуть не поймала аруко, но по odometry робот уже рядом.
 ODOM_REACH_TOLERANCE = 0.22
 
 # odometry-зачет включается не сразу, а только если робот уже рядом с точкой
 # если робот будет крутиться 30 секунд
-ODOM_REACH_TIMEOUT = 30.0
+ODOM_REACH_TIMEOUT = 15.0
 
 # Лидарная безопасность.
 FRONT_STOP_DISTANCE = 0.45
