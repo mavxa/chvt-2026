@@ -20,7 +20,7 @@ GRID_COLS = 6
 GRID_ROWS = 6
 MARKER_SPACING = 1.0
 
-# MAP_ROTATION = 0.0
+MAP_ROTATION = 0.0
 
 # медленная скорость = стабильность)
 MAX_LINEAR = 0.20
