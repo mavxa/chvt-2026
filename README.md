@@ -1,5 +1,9 @@
 # ЧВТ 2026
 
+## Зачетная попытка
+
+Скачать запись зачетной попытки для экспертов: [Google Drive](https://drive.google.com/file/d/1inbZmFD0Xdj1rhCLglrY2HD48Y5zx8fK/view?usp=sharing)
+
 Вариант задания:
 
 - старт: ArUco ID `0`;
